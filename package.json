@@ -1,0 +1,24 @@
+{
+  "name": "i-got-this-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shirhen194/I-Got-This-Server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shirhen194/I-Got-This-Server/issues"
+  },
+  "homepage": "https://github.com/shirhen194/I-Got-This-Server#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0"
+  }
+}

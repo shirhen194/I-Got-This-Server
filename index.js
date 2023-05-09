@@ -116,4 +116,5 @@ app.post('/api/user/signup', (req, res) => {
 // Logout route
 app.post('/api/user/logout', (req, res) => {
   // TODO: Implement logout functionality
-  return res.status(200).json({ message: 'Logout successful
+  return res.status(200).json({ message: 'Logout successful'});
+});
