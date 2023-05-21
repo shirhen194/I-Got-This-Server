@@ -2,6 +2,24 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid');
+// const db = require('./firebase.js')
+// const { getFirestore, collection} = require('firebase/firestore');
+
+// const firebase = require('firebase/app');
+
+// require('firebase/database'); // If using the Realtime Database
+// require('firebase/firestore'); // If using Firestore
+
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./i-got-this-1-firebase-adminsdk-ysq6p-63ce11191b.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://i-got-this-1-default-rtdb.firebaseio.com"
+});
+const db = admin.firestore();
 
 const app = express();
 
@@ -14,6 +32,9 @@ app.use(function (req, res, next) {
 })
 
 app.use(bodyParser.json());
+// const { books } = require('./handlers/books')
+// app.get('/books', books);
+
 
 // Mock users
 const users = [
@@ -33,7 +54,7 @@ const users = [
   },
   {
     id: 3,
-    email: 'user1@example.com',
+    email: 'user3@example.com',
     password: 's',
     name: 's',
     isInCharge: false,
@@ -104,36 +125,33 @@ const reminders = [
 // Secret key for JWT
 const secretKey = 'secret';
 
+
 // Login route
-app.post('/api/user/login', (req, res) => {
-  const { name, password } = req.body;
-  const user = users.find((u) => u.name === name && u.password === password);
-  if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+app.post('/api/user/login', async (req, res) => {
+  const { email, password } = req.body;
+  const usersRef = db.collection("users").doc(email);
+  const user_get = await usersRef.get();
+  if (user_get && user_get.data() && user_get.data().password === password) {
+    const token = jwt.sign({ email }, secretKey, { expiresIn: '5h' });
+    res.json(token);
   }
-  //   const token = jwt.sign({ sub: user.id }, secretKey);
-  const token = jwt.sign({ name }, secretKey, { expiresIn: '5h' });
-  res.json({ token });
+
 });
 
-// app.post('/api/user/login', (req, res) => {
-//     // Mock authentication logic
-//     const { email, password } = req.body;
-//     if (email === 'example@mail.com' && password === 'password') {
-//       // Generate JWT token
-//       const token = jwt.sign({ name }, secretKey, { expiresIn: '1h' });
-//       res.json({ token });
-//     } else {
-//       res.status(401).json({ error: 'Invalid name or password' });
-//     }
-//   });
-
 // Signup route
-app.post('/api/user/signup', (req, res) => {
+app.post('/api/user/signup', async (req, res) => {
   const { email, password, name, isInCharge } = req.body;
-  const user = { id: users.length + 1, email, password, name, isInCharge };
-  users.push(user);
-  res.json(user);
+  console.log("email")
+  console.log(email)
+  const user = { id: uuidv4(), email, password, name, isInCharge };
+  const usersRef = db.collection("users").doc(email);
+  console.log("usersRef")
+  console.log(usersRef)
+  const user_get = await usersRef.set(user);
+  if (user_get) {
+    const token = jwt.sign({ email }, secretKey, { expiresIn: '5h' });
+    res.json(token);
+  }
 });
 
 // Logout route
@@ -142,125 +160,104 @@ app.post('/api/user/logout', (req, res) => {
 });
 
 // Events route
-// app.get('/api/events', (req, res) => {
-//   const { start, end } = req.query;
-//   let filteredEvents = events;
-//   if (start) {
-//     filteredEvents = events.filter((e) => e.date_start >= start);
-//   }
-//   if (end) {
-//     filteredEvents = filteredEvents.filter((e) => e.date_end <= end);
-//   }
-//   res.json({ events: filteredEvents });
-// });
-
 app.get('/api/events', (req, res) => {
   const { start, end } = req.query;
-  let filteredEvents = events;
-  const user = jwt.verify(req.header('Authorization'), secretKey).name
-
-  if (start) {
-    filteredEvents = filteredEvents.filter((e) => e.date_start >= start && e.user == user);
-  }
-  if (end) {
-    filteredEvents = filteredEvents.filter((e) => e.date_end <= end && e.user == user);
-  }
-  filteredEvents = filteredEvents.filter((e) => e.user == user);
   const token = req.header('Authorization');
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const user = decoded.email
+    const eventsRef = db.collection("events")
+    const eventsGet = await eventsRef.where('user', '==', user).get();
+    let filteredEvents = eventsGet.docs.map(doc => doc.data());
+    if (start) {
+      filteredEvents = filteredEvents.filter((e) => e.date_start >= start && e.user == user);
+    }
+    if (end) {
+      filteredEvents = filteredEvents.filter((e) => e.date_end <= end && e.user == user);
     }
     res.json({ events: filteredEvents });
   });
 });
 
-app.post('/api/events', (req, res) => {
+app.post('/api/events', async (req, res) => {
   const event = req.body;
-  event.id = events.length + 1;
   const token = req.header('Authorization');
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    events.push(event);
+    const eventsRef = db.collection("events")
+    const eventsGet = await eventsRef.add(event);
+    if(eventsGet && eventsGet.id){
+      event.id = eventsGet.id;
+    }
     res.json(event);
   });
 });
 
 // Notes route
-app.get('/api/notes', (req, res) => {
-  let filteredNotes = notes;
+app.get('/api/notes', async (req, res) => {
   const token = req.header('Authorization');
-
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const user = decoded.name
-    filteredNotes = filteredNotes.filter((e) => e.user == user);
-    return res.json({ notes: filteredNotes });
+    const notesRef = db.collection("notes");
+    const user = decoded.email
+    let notesGet = await notesRef.where('user', '==', user).get();
+    notesGet =  notesGet.docs.map(doc => doc.data());
+    return res.json({ notes: notesGet });
   });
 });
 
-app.post('/api/notes', (req, res) => {
+app.post('/api/notes', async (req, res) => {
   const token = req.header('Authorization');
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    console.log(decoded)
-  const note = req.body;
-  note.id = notes.length + 1;
-  notes.push(note);
-  res.json(note);
-  });
-
-  // const token = req.header('Authorization');
-  // jwt.verify(token, secretKey, (err, decoded) => {
-  //   if (err) {
-  //     return res.status(401).json({ message: 'Unauthorized' });
-  //   }
-  //   const note = req.body;
-  //   note.id = notes.length + 1;
-  //   notes.push(note);
-  //   res.json(note);
-  // });
+    const note = req.body;
+    const notesRef = db.collection("notes")
+    const notesGet = await notesRef.add(note);
+    if(notesGet && notesGet.id){
+      note.id = notesGet.id;
+    }
+    res.json(note);
+  })
 });
 
-app.put('/api/notes', (req, res) => {
+app.put('/api/notes', async (req, res) => {
   const { id } = req.query;
-  const noteIndex = notes.findIndex((n) => n.id === Number(id));
-  if (noteIndex === -1) {
-    return res.status(404).json({ message: `Note with ID ${id} not found` });
-  }
   const token = req.header('Authorization');
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const noteToUpdate = notes[noteIndex];
-    noteToUpdate.name = req.body.name;
-    noteToUpdate.content = req.body.content;
-
-    notes[noteIndex] = noteToUpdate;
-
-    res.json(noteToUpdate);
+    const notesRef = db.collection("notes").doc(id);
+    const noteToUpdate = await notesRef.get();
+    if (!noteToUpdate || !noteToUpdate.data) {
+      return res.status(404).json({ message: `Note with ID ${id} not found` });
+    }
+    const res = await notesRef.update(req.body);
+    res.json(res.data());
   });
 });
 
 app.delete('/api/notes', (req, res) => {
   const { id } = req.query;
   const token = req.header('Authorization');
-  jwt.verify(token, secretKey, (err, decoded) => {
+  jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const noteIndex = notes.findIndex((n) => n.id === Number(id));
-    if (noteIndex === -1) {
+    const notesRef = db.collection("notes").doc(id);
+    const noteToUpdate = await notesRef.get();
+    if (!noteToUpdate || !noteToUpdate.data) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
     }
-    notes.splice(noteIndex, 1);
+    const res = await notesRef.delete(req.body);
     res.json({ message: `Note with ID ${id} deleted` });
   });
 });
