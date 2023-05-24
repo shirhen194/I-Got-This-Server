@@ -286,6 +286,39 @@ app.post('/api/reminders', (req, res) => {
   res.json(reminder);
 });
 
+// Todo route
+app.get('/api/todos', async (req, res) => {
+  const token = req.header('Authorization');
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const todoRef = db.collection("todo");
+    const user = decoded.email
+    let todosGet = await todoRef.where('user', '==', user).get();
+    todos =  todosGet.docs.map(doc => doc.data());
+    return res.json({ todos });
+  });
+});
+
+app.post('/api/todos', async (req, res) => {
+  const token = req.header('Authorization');
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const todo = req.body;
+    const user = decoded.email
+    todo.user = user
+    const todosRef = db.collection("todo")
+    const todosGet = await todosRef.add(todo);
+    if(todosGet && todosGet.id){
+      todo.id = todosGet.id;
+    }
+    res.json(todo);
+  })
+});
+
 // Start the server
 const port = process.env.PORT || 4005;
 app.listen(port, () => console.log(`Server started on port ${port}`));
