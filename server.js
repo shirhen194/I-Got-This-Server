@@ -319,6 +319,40 @@ app.post('/api/todos', async (req, res) => {
   })
 });
 
+app.put('/api/todos', async (req, res) => {
+  const { id } = req.query;
+  const token = req.header('Authorization');
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const todosRef = db.collection("todo").doc(id);
+    const todoToUpdate = await todosRef.get();
+    if (!todoToUpdate || !todoToUpdate.data) {
+      return res.status(404).json({ message: `Todo with ID ${id} not found` });
+    }
+    const res = await todosRef.update(req.body);
+    res.json(res.data());
+  });
+});
+
+app.delete('/api/todos', (req, res) => {
+  const { id } = req.query;
+  const token = req.header('Authorization');
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const todosRef = db.collection("todo").doc(id);
+    const todoToUpdate = await todosRef.get();
+    if (!todoToUpdate || !todoToUpdate.data) {
+      return res.status(404).json({ message: `Todo with ID ${id} not found` });
+    }
+    const res = await todosRef.delete(req.body);
+    res.json({ message: `Todo with ID ${id} deleted` });
+  });
+});
+
 // Start the server
 const port = process.env.PORT || 4005;
 app.listen(port, () => console.log(`Server started on port ${port}`));
