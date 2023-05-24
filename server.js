@@ -133,9 +133,8 @@ app.post('/api/user/login', async (req, res) => {
   const user_get = await usersRef.get();
   if (user_get && user_get.data() && user_get.data().password === password) {
     const token = jwt.sign({ email }, secretKey, { expiresIn: '5h' });
-    res.json(token);
+    res.json({token});
   }
-
 });
 
 // Signup route
@@ -150,7 +149,7 @@ app.post('/api/user/signup', async (req, res) => {
   const user_get = await usersRef.set(user);
   if (user_get) {
     const token = jwt.sign({ email }, secretKey, { expiresIn: '5h' });
-    res.json(token);
+    res.json({token});
   }
 });
 
@@ -219,6 +218,8 @@ app.post('/api/notes', async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
     const note = req.body;
+    const user = decoded.email
+    note.user = user
     const notesRef = db.collection("notes")
     const notesGet = await notesRef.add(note);
     if(notesGet && notesGet.id){
