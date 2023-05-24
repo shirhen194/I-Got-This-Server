@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/shirhen194/I-Got-This-Server#readme",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0"
+    "jsonwebtoken": "^9.0.0",
+    "openai": "^3.2.1"
   }
 }
