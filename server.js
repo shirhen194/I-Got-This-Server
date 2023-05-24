@@ -187,6 +187,8 @@ app.post('/api/events', async (req, res) => {
     if (err) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
+    const user = decoded.email
+    event.user = user
     const eventsRef = db.collection("events")
     const eventsGet = await eventsRef.add(event);
     if(eventsGet && eventsGet.id){
