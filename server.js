@@ -269,6 +269,7 @@ app.delete("/api/notes", (req, res) => {
   });
 });
 
+
 // Reminders route
 app.get("/api/reminders", (req, res) => {
   const { user_id, date } = req.query;
@@ -325,13 +326,15 @@ app.post("/api/todos", async (req, res) => {
 // Get Tasks From Text Using OpenAI API
 const { Configuration, OpenAIApi } = require("openai");
 
-const SECRET_KEY = "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";
+const OPENAI_API_KEY = "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";
 
 const configuration = new Configuration({
-  apiKey: SECRET_KEY,
+  //get SECRET_KEY from env variable,
+  apiKey: OPENAI_API_KEY,
 });
 
 const openai = new OpenAIApi(configuration);
+
 
 app.use(express.json());
 
@@ -346,7 +349,7 @@ app.post("/extract-task", async (req, res) => {
       if (text == null) {
         throw new Error("Uh oh, no prompt was provided");
       }
-
+      console.log("text ", text);
       const response = await openai.createCompletion({
         model: "text-davinci-003",
         prompt: generatePrompt(text),
@@ -354,13 +357,18 @@ app.post("/extract-task", async (req, res) => {
         temperature: 0.6,
       });
       const completion = response.data.choices[0].text;
-      // convert completion to list (complection = ["task1", "task2"])
+      console.log("completion ", completion);
+      /**
+       * // convert completion to list (complection = ["task1", "task2"])
       const tasks_list = JSON.parse(completion);
       for (let i = 0; i < tasks_list.length; i++) {
         const task = tasks_list[i];
         console.log("task ", task);
         // add task to db
       }
+       * 
+       */
+      
       return res.status(200).json({
         success: true,
         message: completion,
@@ -403,12 +411,12 @@ app.post("/speech-to-text", async (req, res) => {
   });
 });
 
-app.put('/api/todos', async (req, res) => {
+app.put("/api/todos", async (req, res) => {
   const { id } = req.query;
-  const token = req.header('Authorization');
+  const token = req.header("Authorization");
   jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
     const todosRef = db.collection("todo").doc(id);
     const todoToUpdate = await todosRef.get();
@@ -420,12 +428,12 @@ app.put('/api/todos', async (req, res) => {
   });
 });
 
-app.delete('/api/todos', (req, res) => {
+app.delete("/api/todos", (req, res) => {
   const { id } = req.query;
-  const token = req.header('Authorization');
+  const token = req.header("Authorization");
   jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
     const todosRef = db.collection("todo").doc(id);
     const todoToUpdate = await todosRef.get();
