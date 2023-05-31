@@ -243,8 +243,8 @@ app.put('/api/notes', async (req, res) => {
     if (!noteToUpdate || !noteToUpdate.data) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
     }
-    const res = await notesRef.update(req.body);
-    res.json(res.data());
+    const response = await notesRef.update(req.body);
+    res.json(response.data());
   });
 });
 
@@ -260,7 +260,7 @@ app.delete('/api/notes', (req, res) => {
     if (!noteToUpdate || !noteToUpdate.data) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
     }
-    const res = await notesRef.delete(req.body);
+    const response = await notesRef.delete(req.body);
     res.json({ message: `Note with ID ${id} deleted` });
   });
 });
@@ -331,8 +331,8 @@ app.put('/api/todos', async (req, res) => {
     if (!todoToUpdate || !todoToUpdate.data) {
       return res.status(404).json({ message: `Todo with ID ${id} not found` });
     }
-    const res = await todosRef.update(req.body);
-    res.json(res.data());
+    const response = await todosRef.update(req.body);
+    res.json(response.data());
   });
 });
 
@@ -348,7 +348,7 @@ app.delete('/api/todos', (req, res) => {
     if (!todoToUpdate || !todoToUpdate.data) {
       return res.status(404).json({ message: `Todo with ID ${id} not found` });
     }
-    const res = await todosRef.delete(req.body);
+    const response = await todosRef.delete(req.body);
     res.json({ message: `Todo with ID ${id} deleted` });
   });
 });
