@@ -20,7 +20,20 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
+// openai API
 const app = express();
+const { Configuration, OpenAIApi } = require("openai");
+
+const OPENAI_API_KEY = "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";
+
+const configuration = new Configuration({
+  //get SECRET_KEY from env variable,
+  apiKey: OPENAI_API_KEY,
+});
+
+const openai = new OpenAIApi(configuration);
+
+app.use(express.json());
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -184,6 +197,28 @@ app.get("/api/events", (req, res) => {
   });
 });
 
+async function getTasksBeforeEvent(eventTitle, eventContent) {
+  const response = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
+    max_tokens: 2000,
+    temperature: 0.6,
+  });
+  const completion = response.data.choices[0].text;
+  console.log("completion ", completion);
+  return completion;
+}
+
+function convertToList(text) {
+    // Split the text into separate lines
+    const list = text.split('\n');
+    return list;
+}
+
+function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
+  return `As someone experiencing significant memory difficulties, I require your assistance in preparing for an upcoming event ${eventTitle}, ${eventContent}. Please provide me with a concise list of four straightforward tasks to complete at home before leaving for the meeting. Please avoid providing explanations for each task and refrain from including tasks directly related to the specific event.`;
+}
+
 app.post("/api/events", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
@@ -193,6 +228,12 @@ app.post("/api/events", async (req, res) => {
     }
     const user = decoded.email;
     event.user = user;
+
+    const tasks = await getTasksBeforeEvent(event.event_name, event.extraData);
+    console.log("tasks ", tasks);
+    event.tasks = convertToList(tasks);
+    console.log("tasks as list ", event.tasks);
+
     const eventsRef = db.collection("events");
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
@@ -269,7 +310,6 @@ app.delete("/api/notes", (req, res) => {
   });
 });
 
-
 // Reminders route
 app.get("/api/reminders", (req, res) => {
   const { user_id, date } = req.query;
@@ -324,19 +364,6 @@ app.post("/api/todos", async (req, res) => {
 });
 
 // Get Tasks From Text Using OpenAI API
-const { Configuration, OpenAIApi } = require("openai");
-
-const OPENAI_API_KEY = "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";
-
-const configuration = new Configuration({
-  //get SECRET_KEY from env variable,
-  apiKey: OPENAI_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
-
-app.use(express.json());
 
 app.post("/extract-task", async (req, res) => {
   const token = req.header("Authorization");
@@ -352,7 +379,7 @@ app.post("/extract-task", async (req, res) => {
       console.log("text ", text);
       const response = await openai.createCompletion({
         model: "text-davinci-003",
-        prompt: generatePrompt(text),
+        prompt: generatePromptExtractTasks(text),
         max_tokens: 2000,
         temperature: 0.6,
       });
@@ -368,7 +395,7 @@ app.post("/extract-task", async (req, res) => {
       }
        * 
        */
-      
+
       return res.status(200).json({
         success: true,
         message: completion,
@@ -379,15 +406,18 @@ app.post("/extract-task", async (req, res) => {
   });
 });
 
-function generatePrompt(text) {
+function generatePromptExtractTasks(text) {
+  //return text;
   return ` Extract tasks from the following text and return the tasks as a java script list:  ${text}`;
 }
 
 // speech to rext
 const fs = require("fs");
 app.post("/speech-to-text", async (req, res) => {
+  console.log("speech-to-text");
   const token = req.header("Authorization");
   const { path_to_audio } = req.body;
+  console.log("path_to_audio ", path_to_audio);
   jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -396,15 +426,24 @@ app.post("/speech-to-text", async (req, res) => {
       if (path_to_audio == null) {
         throw new Error("Missing path_to_audio in request body");
       }
-      const response = await openai.createTranscription(
+      const response_speech_to_text = await openai.createTranscription(
         fs.createReadStream(path_to_audio),
         "whisper-1"
       );
       const transcript = response.data.text;
+      console.log("text ", transcript);
+      const response_extract_tasks_from_transcript = await openai.createCompletion({
+        model: "text-davinci-003",
+        prompt: generatePromptExtractTasks(transcript),
+        max_tokens: 2000,
+        temperature: 0.6,
+      });
+      const completion = response.data.choices[0].text;
       return res.status(200).json({
         success: true,
-        message: transcript,
+        message: completion,
       });
+
     } catch (error) {
       console.log(error.message);
     }
