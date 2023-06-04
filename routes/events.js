@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("../handlers/firebase");
 const secretKey = require("../handlers/jwt_key");
+const openai = require("../handlers/openAi");
 
 router.get("/", (req, res) => {
   const { start, end } = req.query;
@@ -55,7 +56,7 @@ async function getTasksBeforeEvent(eventTitle, eventContent) {
   return completion;
 }
 
-app.post("/api/events", async (req, res) => {
+router.post("/", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
   jwt.verify(token, secretKey, async (err, decoded) => {
@@ -65,7 +66,7 @@ app.post("/api/events", async (req, res) => {
     const user = decoded.email;
     event.user = user;
 
-    const tasks = await getTasksBeforeEvent(event.event_name, event.extraData);
+    const tasks = await getTasksBeforeEvent(event.title, event.content);
     event.tasks = convertToList(tasks);
     const eventsRef = db.collection("events");
     const eventsGet = await eventsRef.add(event);
