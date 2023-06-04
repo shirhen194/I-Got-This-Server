@@ -30,7 +30,32 @@ router.get("/", (req, res) => {
   });
 });
 
-router.post("/", async (req, res) => {
+function convertToList(text) {
+  // Split the text into separate lines
+  const list = text.split("\n");
+  return list;
+}
+
+function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
+  return `As someone experiencing significant memory difficulties,
+ I require your assistance in preparing for an upcoming event ${eventTitle}, ${eventContent}.
+  Please provide me with a concise list of four straightforward tasks to complete at home before leaving for the meeting. 
+  Please avoid providing explanations for each task and refrain from including tasks directly related to the specific event.`;
+}
+
+async function getTasksBeforeEvent(eventTitle, eventContent) {
+  const response = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
+    max_tokens: 2000,
+    temperature: 0.6,
+  });
+  const completion = response.data.choices[0].text;
+  console.log("completion ", completion);
+  return completion;
+}
+
+app.post("/api/events", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
   jwt.verify(token, secretKey, async (err, decoded) => {
@@ -39,6 +64,9 @@ router.post("/", async (req, res) => {
     }
     const user = decoded.email;
     event.user = user;
+
+    const tasks = await getTasksBeforeEvent(event.event_name, event.extraData);
+    event.tasks = convertToList(tasks);
     const eventsRef = db.collection("events");
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
