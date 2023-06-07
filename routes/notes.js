@@ -33,7 +33,12 @@ router.post("/", async (req, res) => {
     const notesGet = await notesRef.add(note);
     if (notesGet && notesGet.id) {
       note.id = notesGet.id;
+    } else {
+      return res.status(404).json({ message: `Note not added` });
     }
+    const noteId = notesGet.id
+    const noteToUpdateRef = notesRef.doc(noteId);
+    const response = await noteToUpdateRef.update({id:noteId});
     res.json(note);
   });
 });

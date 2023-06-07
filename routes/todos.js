@@ -33,7 +33,12 @@ router.post("/", async (req, res) => {
     const todosGet = await todosRef.add(todo);
     if (todosGet && todosGet.id) {
       todo.id = todosGet.id;
+    } else {
+      return res.status(404).json({ message: `Todo not added` });
     }
+    const todoId = todosGet.id
+    const todoToUpdateRef = todosRef.doc(todoId);
+    const response = await todoToUpdateRef.update({id:todoId});
     res.json(todo);
   });
 });
