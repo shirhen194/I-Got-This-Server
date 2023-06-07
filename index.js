@@ -93,7 +93,7 @@ app.post('/api/user/login', (req, res) => {
   }
 
   const token = jwt.sign({ id: user.id }, SECRET_KEY);
-  return res.status(200).json({ token });
+  return res.status(200).json({ user, token});
 });
 
 // Signup route
@@ -116,4 +116,5 @@ app.post('/api/user/signup', (req, res) => {
 // Logout route
 app.post('/api/user/logout', (req, res) => {
   // TODO: Implement logout functionality
-  return res.status(200).json({ message: 'Logout successful
+  return res.status(200).json({ message: 'Logout successful' });
+});
