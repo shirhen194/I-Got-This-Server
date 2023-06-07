@@ -72,7 +72,12 @@ router.post("/", async (req, res) => {
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
       event.id = eventsGet.id;
+    } else {
+      return res.status(404).json({ message: `Event not added` });
     }
+    const eventId = eventsGet.id
+    const eventToUpdateRef = eventsRef.doc(eventId);
+    const response = await eventToUpdateRef.update({id:eventId});
     res.json(event);
   });
 });
