@@ -89,29 +89,13 @@ router.post("/", async (req, res) => {
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
       event.id = eventsGet.id;
+    } else {
+      return res.status(404).json({ message: `Event not added` });
     }
+    const eventId = eventsGet.id
+    const eventToUpdateRef = eventsRef.doc(eventId);
+    const response = await eventToUpdateRef.update({id:eventId});
     res.json(event);
-  });
-});
-
-router.put("/addTasks", async (req, res) => {
-  console.log("addTasks");
-  const { id } = req.query;
-  const token = req.header("Authorization");
-  jwt.verify(token, secretKey, async (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const eventRef = db.collection("events").doc(id);
-    const eventToUpdate = await eventRef.get();
-    if (!eventToUpdate || !eventToUpdate.data) {
-      return res.status(404).json({ message: `Event with ID ${id} not found` });
-    }
-    const event = eventToUpdate.data();
-    const tasks = await getTasksBeforeEvent(event.title, event.content);
-    event.tasks = convertToList(tasks);
-    const response = await eventRef.update(event);
-    res.json(tasks);
   });
 });
 

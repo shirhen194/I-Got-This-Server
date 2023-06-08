@@ -20,27 +20,32 @@ router.get("/", async (req, res) => {
   });
 });
 
-router.post("/", async (req, res) => {
-  const token = req.header("Authorization");
-  jwt.verify(token, secretKey, async (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: "Unauthorized" });
+router.post("/schedule-notification", (req, res) => {
+  const { token, scheduleTime, message } = req.body;
+
+  // Schedule the notification based on the provided time
+  // You can use a task scheduler or a cron job library here
+
+  // Example using node-cron library
+  const cron = require("node-cron");
+  const task = cron.schedule(scheduleTime, async () => {
+    try {
+      // Send the notification to the device using Firebase Admin SDK
+      await admin.messaging().send({
+        token,
+        notification: {
+          title: "Scheduled Notification",
+          body: message,
+        },
+      });
+
+      console.log("Notification sent!");
+    } catch (error) {
+      console.error("Error sending notification:", error);
     }
-    const note = req.body;
-    const user = decoded.email;
-    note.user = user;
-    const notesRef = db.collection("notes");
-    const notesGet = await notesRef.add(note);
-    if (notesGet && notesGet.id) {
-      note.id = notesGet.id;
-    } else {
-      return res.status(404).json({ message: `Note not added` });
-    }
-    const noteId = notesGet.id
-    const noteToUpdateRef = notesRef.doc(noteId);
-    const response = await noteToUpdateRef.update({id:noteId});
-    res.json(note);
   });
+
+  res.send("Notification scheduled successfully!");
 });
 
 router.put("/", async (req, res) => {
