@@ -56,6 +56,26 @@ async function getTasksBeforeEvent(eventTitle, eventContent) {
   return completion;
 }
 
+router.put("/", async (req, res) => {
+  const { id } = req.query;
+  const token = req.header("Authorization");
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const eventRef = db.collection("events").doc(id);
+    console.log("eventRef ", eventRef);
+    const eventToUpdate = await eventRef.get();
+    console.log("eventToUpdate ", eventToUpdate);
+    if (!eventToUpdate || !eventToUpdate.data) {
+      return res.status(404).json({ message: `Event with ID ${id} not found` });
+    }
+    const response = await eventRef.update(req.body);
+    console.log("response ", response);
+    res.json(response);
+  });
+});
+
 router.post("/", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
@@ -65,15 +85,33 @@ router.post("/", async (req, res) => {
     }
     const user = decoded.email;
     event.user = user;
-
-    const tasks = await getTasksBeforeEvent(event.title, event.content);
-    event.tasks = convertToList(tasks);
     const eventsRef = db.collection("events");
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
       event.id = eventsGet.id;
     }
     res.json(event);
+  });
+});
+
+router.put("/addTasks", async (req, res) => {
+  console.log("addTasks");
+  const { id } = req.query;
+  const token = req.header("Authorization");
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const eventRef = db.collection("events").doc(id);
+    const eventToUpdate = await eventRef.get();
+    if (!eventToUpdate || !eventToUpdate.data) {
+      return res.status(404).json({ message: `Event with ID ${id} not found` });
+    }
+    const event = eventToUpdate.data();
+    const tasks = await getTasksBeforeEvent(event.title, event.content);
+    event.tasks = convertToList(tasks);
+    const response = await eventRef.update(event);
+    res.json(tasks);
   });
 });
 

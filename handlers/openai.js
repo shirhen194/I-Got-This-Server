@@ -1,7 +1,7 @@
 // Get Tasks From Text Using OpenAI API
 const { Configuration, OpenAIApi } = require("openai");
 
-const OPENAI_API_KEY = "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";
+OPENAI_API_KEY = "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";
 
 const configuration = new Configuration({
   //get SECRET_KEY from env variable,
