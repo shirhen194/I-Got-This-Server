@@ -3,7 +3,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const secretKey = require("./handlers/jwt_key");
-const openai = require("./handlers/openAi");
+const openai = require("./handlers/openAi.js");
 
 // speech to rext
 const fs = require("fs");
