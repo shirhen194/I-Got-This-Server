@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("./handlers/firebase");
 const secretKey = require("./handlers/jwt_key");
-const openai = require("./handlers/openAi.js");
+const openai = require("./handlers/openAiConfig.js");
 
 router.get("/", (req, res) => {
   const { start, end } = req.query;
