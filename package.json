@@ -8,12 +8,14 @@
     "firebase-admin": "^11.8.0",
     "jsonwebtoken": "^9.0.0",
     "openai": "^3.2.1",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "webpack": "^5.86.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0"
+    "babel-cli": "^6.26.0",
+    "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "build": "npm install"
+    "build": "webpack --config=./build/webpack.config.js"
   }
 }
