@@ -1,4 +1,8 @@
 {
+  "name": "i-got-this-server",
+  "version": "1.0.0",
+  "description": "My Express app",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.18.2",
     "firebase-admin": "^11.8.0",
@@ -10,6 +14,6 @@
     "babel-cli": "^6.26.0"
   },
   "scripts": {
-    "build": "babel src -d dist"
+    "build": "npm install"
   }
 }
