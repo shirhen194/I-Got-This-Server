@@ -119,5 +119,22 @@ router.put("/addTasks", async (req, res) => {
   });
 });
 
+router.delete("/", (req, res) => {
+  const { id } = req.query;
+  const token = req.header("Authorization");
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const eventRef = db.collection("events").doc(id);
+    const eventToUpdate = await eventRef.get();
+    if (!eventToUpdate || !eventToUpdate.data) {
+      return res.status(404).json({ message: `Event with ID ${id} not found` });
+    }
+    const response = await eventRef.delete(req.body);
+    res.json({ message: `Event with ID ${id} deleted` });
+  });
+});
+
 
 module.exports = router;
