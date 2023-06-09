@@ -5,5 +5,11 @@
     "jsonwebtoken": "^9.0.0",
     "openai": "^3.2.1",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0"
+  },
+  "scripts": {
+    "build": "babel src -d dist"
   }
 }
