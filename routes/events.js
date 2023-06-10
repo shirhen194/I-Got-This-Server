@@ -2,9 +2,9 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
-const db = require("../handlers/firebase");
-const secretKey = require("../handlers/jwt_key");
-const openai = require("../handlers/openAi");
+const db = require("./handlers/firebase");
+const secretKey = require("./handlers/jwt_key");
+const openai = require("./handlers/openAiConfig.js");
 
 router.get("/", (req, res) => {
   const { start, end } = req.query;
@@ -31,11 +31,36 @@ router.get("/", (req, res) => {
   });
 });
 
-function convertToList(text) {
-  // Split the text into separate lines
-  const list = text.split("\n");
-  return list;
-}
+// function convertToList(text) {
+//   // Split the text into separate lines
+//   const list = text.split("\n");
+//   return list;
+// }
+
+function convertStringToTasks(str) {
+  const lines = str.split('\n'); // Split the string by newline characters
+  const tasks = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim(); // Remove leading/trailing whitespaces
+
+    if (line.length > 0) {
+      // Ignore empty lines
+      const taskNumberMatch = line.match(/^\d+\./); // Check if the line starts with a number followed by a dot
+
+      if (taskNumberMatch) {
+        const content = line.slice(taskNumberMatch[0].length).trim(); // Extract the content after the task number
+        const task = {
+          content,
+          isDone: false,
+        };
+        tasks.push(task);
+      }
+    }
+  }
+  console.log("completion ", tasks);
+  return tasks;
+};
 
 function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
   return `As someone experiencing significant memory difficulties,
@@ -113,9 +138,28 @@ router.put("/addTasks", async (req, res) => {
     }
     const event = eventToUpdate.data();
     const tasks = await getTasksBeforeEvent(event.title, event.content);
-    event.tasks = convertToList(tasks);
+    event.tasks = convertStringToTasks(tasks);
+    console.log("here ");
+
     const response = await eventRef.update(event);
     res.json(tasks);
+  });
+});
+
+router.delete("/", (req, res) => {
+  const { id } = req.query;
+  const token = req.header("Authorization");
+  jwt.verify(token, secretKey, async (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const eventRef = db.collection("events").doc(id);
+    const eventToUpdate = await eventRef.get();
+    if (!eventToUpdate || !eventToUpdate.data) {
+      return res.status(404).json({ message: `Event with ID ${id} not found` });
+    }
+    const response = await eventRef.delete(req.body);
+    res.json({ message: `Event with ID ${id} deleted` });
   });
 });
 
