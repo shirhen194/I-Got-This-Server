@@ -70,15 +70,21 @@ function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
 }
 
 async function getTasksBeforeEvent(eventTitle, eventContent) {
-  const response = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
-    max_tokens: 2000,
-    temperature: 0.6,
-  });
-  const completion = response.data.choices[0].text;
-  console.log("completion ", completion);
-  return completion;
+  // const response = await openai.createCompletion({
+  //   model: "text-davinci-003",
+  //   prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
+  //   max_tokens: 2000,
+  //   temperature: 0.6,
+  // });
+  // const completion = response.data.choices[0].text;
+  // console.log("completion ", completion);
+  // return completion;
+  const temp = `
+  1. Set an alarm for the time you need to leave for the event.
+  2. Pack a bag with items you may need for the event, such as a water bottle, snacks, a notebook, and a pen.
+  3. Prepare your outfit for the event, including shoes and accessories.
+  4. Check the address and directions to the event location.`;
+  return temp;
 }
 
 router.put("/", async (req, res) => {

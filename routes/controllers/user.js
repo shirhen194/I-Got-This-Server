@@ -18,8 +18,9 @@ exports.login = async (req, res) => {
 
 // Signup controller
 exports.signup = async (req, res) => {
-  const { email, password, name, isInCharge } = req.body;
-  const user = { id: uuidv4(), email, password, name, isInCharge };
+  const { email, password, name, isInCharge, homeAddress, contactNumber } = req.body;
+  console.log("address", homeAddress)
+  const user = { id: uuidv4(), email, password, name, isInCharge, homeAddress, contactNumber };
   const usersRef = db.collection("users").doc(email);
   const user_get = await usersRef.set(user);
   if (user_get) {
