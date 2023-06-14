@@ -18,11 +18,15 @@ exports.login = async (req, res) => {
 
 // Signup controller
 exports.signup = async (req, res) => {
-  const { email, password, name, isInCharge, homeAddress, contactNumber } = req.body;
+  const { email, password, name, isInCharge, homeAddress = "Not provided", contactNumber = "Not provided" } = req.body;
   console.log("address", homeAddress)
   const user = { id: uuidv4(), email, password, name, isInCharge, homeAddress, contactNumber };
   const usersRef = db.collection("users").doc(email);
-  const user_get = await usersRef.set(user);
+  let user_get = await usersRef.get();
+  if (user_get && user_get.data()) {
+    return res.status(403).json({ message: "User Already Exists" });
+  }
+  user_get = await usersRef.set(user);
   if (user_get) {
     const token = jwt.sign({ email }, secretKey, { expiresIn: "5h" });
     res.json({ token });
