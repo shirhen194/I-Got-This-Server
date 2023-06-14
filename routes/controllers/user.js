@@ -10,7 +10,7 @@ exports.login = async (req, res) => {
   const user_get = await usersRef.get();
   if (user_get && user_get.data() && user_get.data().password === password) {
     const token = jwt.sign({ email }, secretKey, { expiresIn: "5h" });
-    res.json({ token });
+    res.json({ user: user_get.data(), token: token });
   } else {
     res.status(401).json({ message: "Invalid email or password" });
   }
