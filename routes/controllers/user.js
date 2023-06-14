@@ -16,6 +16,40 @@ exports.login = async (req, res) => {
   }
 };
 
+//Forgot password- edit user
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.query;
+    const {name, password } = req.body;
+    const usersRef = db.collection("users").doc(email);
+    const user_get = await usersRef.get();
+    if (user_get && user_get.data() && user_get.data().name === name) {
+      const response = await usersRef.update({password})
+      const token = jwt.sign({ email }, secretKey, { expiresIn: "5h" });
+      res.json({ user: user_get.data(), token: token });
+    } else{
+      res.status(401).json({message: "Invalid email or user name"});
+    }
+}
+
+  // edit user
+  exports.edit = async (req, res) => {
+    const { email } = req.query;
+    const token = req.header("Authorization");
+    jwt.verify(token, secretKey, async (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+    const usersRef = db.collection("users").doc(email);
+    const user_get = await usersRef.get();
+    if (!user_get || !user_get.data) {
+      return res.status(404).json({ message: `User with email ${email} not found` });
+    }
+    const response = await usersRef.update(req.body);
+    res.json(response.data());
+  });
+}
+
+
 // Signup controller
 exports.signup = async (req, res) => {
   const { email, password, name, isInCharge, homeAddress = "Not provided", contactNumber = "Not provided" } = req.body;
