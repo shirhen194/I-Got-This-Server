@@ -52,11 +52,11 @@ router.put("/", async (req, res) => {
     }
     const notesRef = db.collection("notes").doc(id);
     const noteToUpdate = await notesRef.get();
-    if (!noteToUpdate || !noteToUpdate.data) {
+    if (!noteToUpdate || !noteToUpdate.data()) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
     }
     const response = await notesRef.update(req.body);
-    res.json(response.data());
+    res.json({...noteToUpdate.data(), ...req.body});
   });
 });
 

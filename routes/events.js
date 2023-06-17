@@ -95,21 +95,20 @@ router.put("/", async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const eventRef = db.collection("events").doc(id);
-    console.log("eventRef ", eventRef);
     const eventToUpdate = await eventRef.get();
-    console.log("eventToUpdate ", eventToUpdate);
-    if (!eventToUpdate || !eventToUpdate.data) {
+    if (!eventToUpdate || !eventToUpdate.data()) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });
     }
     const response = await eventRef.update(req.body);
-    console.log("response ", response);
-    res.json(response);
+    const event_updated = {...eventToUpdate.data(), ...req.body}
+    res.json({...eventToUpdate.data(), ...req.body});
   });
 });
 
 router.post("/", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
+
   jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });

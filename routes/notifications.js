@@ -76,11 +76,11 @@ router.put("/", async (req, res) => {
         }
         const notificationsRef = db.collection("notifications").doc(id);
         const notificationToUpdate = await notificationsRef.get();
-        if (!notificationToUpdate || !notificationToUpdate.data) {
+        if (!notificationToUpdate || !notificationToUpdate.data()) {
             return res.status(404).json({ message: `Notification with ID ${id} not found` });
         }
         const response = await notificationsRef.update(req.body);
-        res.json(response.data());
+        res.json({...notificationToUpdate.data(), ...req.body});
     });
 });
 

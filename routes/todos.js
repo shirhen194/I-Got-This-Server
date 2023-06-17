@@ -56,7 +56,7 @@ router.put("/", async (req, res) => {
       return res.status(404).json({ message: `Todo with ID ${id} not found` });
     }
     const response = await todosRef.update(req.body);
-    res.json(response.data());
+    res.json({...todoToUpdate.data(), ...req.body});
   });
 });
 
