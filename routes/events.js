@@ -80,10 +80,10 @@ async function getTasksBeforeEvent(eventTitle, eventContent) {
   // console.log("completion ", completion);
   // return completion;
   const temp = `
-  1. Set an alarm for the time you need to leave for the event.
-  2. Pack a bag with items you may need for the event, such as a water bottle, snacks, a notebook, and a pen.
-  3. Prepare your outfit for the event, including shoes and accessories.
-  4. Check the address and directions to the event location.`;
+  1. Pack a bag with items you may need such as a water bottle and snacks.
+  2. Get your membership card, and bus card.
+  3. Wear comfortable clothes and shoes.
+  4. Check when your bus is coming.`;
   return temp;
 }
 
