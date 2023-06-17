@@ -45,7 +45,7 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: `User with email ${email} not found` });
     }
     const response = await usersRef.update(req.body);
-    res.json(response.data());
+    res.json(response.data);
   });
 }
 

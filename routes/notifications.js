@@ -80,7 +80,7 @@ router.put("/", async (req, res) => {
             return res.status(404).json({ message: `Notification with ID ${id} not found` });
         }
         const response = await notificationsRef.update(req.body);
-        res.json(response.data());
+        res.json(response.data);
     });
 });
 

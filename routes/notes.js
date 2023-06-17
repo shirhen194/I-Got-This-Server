@@ -56,7 +56,7 @@ router.put("/", async (req, res) => {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
     }
     const response = await notesRef.update(req.body);
-    res.json(response.data());
+    res.json(response.data);
   });
 });
 
