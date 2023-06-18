@@ -5,11 +5,14 @@ const secretKey = require("../handlers/jwt_key");
 
 // Login controller
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, phoneToken = "Not provided"} = req.body;
   const usersRef = db.collection("users").doc(email);
   const user_get = await usersRef.get();
   if (user_get && user_get.data() && user_get.data().password === password) {
     const token = jwt.sign({ email }, secretKey);
+    if (!user_get.data().isInCharge && (!user_get.data().phoneToken || user_get.data().phoneToken != phoneToken)) {
+      const response = await usersRef.update({phoneToken})
+    }
     res.json({ user: user_get.data(), token: token });
   } else {
     res.status(401).json({ message: "Invalid email or password" });
@@ -52,7 +55,7 @@ exports.forgotPassword = async (req, res) => {
 
 // Signup controller
 exports.signup = async (req, res) => {
-  const { email, password, name, isInCharge, homeAddress = "Not provided", contactNumber = "Not provided" } = req.body;
+  const { email, password, name, isInCharge, homeAddress = "Not provided", contactNumber = "Not provided", phoneToken = "Not provided" } = req.body;
   const user = { id: uuidv4(), email, password, name, isInCharge, homeAddress, contactNumber };
   const usersRef = db.collection("users").doc(email);
   let user_get = await usersRef.get();

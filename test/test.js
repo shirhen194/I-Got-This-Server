@@ -15,19 +15,7 @@ let test_name = "John Doe"
 // Create an Express app and use the events router
 const app = express();
 app.use(express.json());
-
 app.use("/", eventsRouter);
-
-// reusable boilerplate to be able to get the assert failures
-function handleError(done, fn) {
-  try { 
-      fn();
-      done();
-  } catch (error) {
-      done(error);
-  }
-}
-
 
 // Mount the user routes on the app
 app.use('/user', userRoutes);
