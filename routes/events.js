@@ -31,12 +31,6 @@ router.get("/", (req, res) => {
   });
 });
 
-// function convertToList(text) {
-//   // Split the text into separate lines
-//   const list = text.split("\n");
-//   return list;
-// }
-
 function convertStringToTasks(str) {
   const lines = str.split('\n'); // Split the string by newline characters
   const tasks = [];
@@ -70,20 +64,15 @@ function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
 }
 
 async function getTasksBeforeEvent(eventTitle, eventContent) {
-  // const response = await openai.createCompletion({
-  //   model: "text-davinci-003",
-  //   prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
-  //   max_tokens: 2000,
-  //   temperature: 0.6,
-  // });
-  // const completion = response.data.choices[0].text;
-  // console.log("completion ", completion);
-  // return completion;
-  const temp = `
-  1. Pack a bag with items you may need such as a water bottle and snacks.
-  2. Get your membership card, and bus card.
-  3. Wear comfortable clothes and shoes.
-  4. Check when your bus is coming.`;
+  const response = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
+    max_tokens: 2000,
+    temperature: 0.6,
+  });
+  const completion = response.data.choices[0].text;
+  console.log("completion ", completion);
+  return completion;
   return temp;
 }
 
