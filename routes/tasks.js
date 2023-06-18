@@ -10,7 +10,7 @@ const fs = require("fs");
 router.use(express.json());
 
 function generatePrompt(text) {
-  return ` Extract tasks from the following text and return the tasks as a javascript list:  ${text}`;
+  return ` Extract tasks from the following text and return the tasks as a javascript list: ${text}`;
 }
 
 router.post("/extract-task", async (req, res) => {
@@ -32,9 +32,7 @@ router.post("/extract-task", async (req, res) => {
         max_tokens: 2000,
         temperature: 0.6,
       });
-      console.log("response ", response);
       const completion = response.data.choices[0].text;
-      console.log("completion ", completion);
       res.json(completion);
     } catch (error) {
       console.log(error.message);
@@ -68,9 +66,7 @@ router.post("/speech-to-text", async (req, res) => {
         max_tokens: 2000,
         temperature: 0.6,
       });
-      console.log("response ", response_tasks);
       const completion = response.data.choices[0].text;
-      console.log("completion ", completion);
       res.json(completion);
     } catch (error) {
       console.log(error.message);
@@ -84,7 +80,6 @@ function convertAudioToBuffer(uri) {
     const xhr = new XMLHttpRequest();
     xhr.open("GET", uri, true);
     xhr.responseType = "arraybuffer";
-
     xhr.onload = function () {
       if (xhr.status === 200) {
         resolve(xhr.response);
@@ -92,11 +87,9 @@ function convertAudioToBuffer(uri) {
         reject(new Error("Failed to load audio file"));
       }
     };
-
     xhr.onerror = function () {
       reject(new Error("Failed to load audio file"));
     };
-
     xhr.send();
   });
 }

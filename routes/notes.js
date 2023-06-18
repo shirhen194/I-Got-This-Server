@@ -1,9 +1,11 @@
-// notes.js
+import { Strings } from "./consts";
+
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("./handlers/firebase");
 const secretKey = require("./handlers/jwt_key");
+const { DB_COLLECTION_NOTES } = Strings;
 
 
 router.get("/", async (req, res) => {
@@ -12,7 +14,7 @@ router.get("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const notesRef = db.collection("notes");
+    const notesRef = db.collection(DB_COLLECTION_NOTES);
     const user = decoded.email;
     let notesGet = await notesRef.where("user", "==", user).get();
     notesGet = notesGet.docs.map((doc) => doc.data());
@@ -29,7 +31,7 @@ router.post("/", async (req, res) => {
     const note = req.body;
     const user = decoded.email;
     note.user = user;
-    const notesRef = db.collection("notes");
+    const notesRef = db.collection(DB_COLLECTION_NOTES);
     const notesGet = await notesRef.add(note);
     if (notesGet && notesGet.id) {
       note.id = notesGet.id;
@@ -50,7 +52,7 @@ router.put("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const notesRef = db.collection("notes").doc(id);
+    const notesRef = db.collection(DB_COLLECTION_NOTES).doc(id);
     const noteToUpdate = await notesRef.get();
     if (!noteToUpdate || !noteToUpdate.data()) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });
@@ -67,7 +69,7 @@ router.delete("/", (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const notesRef = db.collection("notes").doc(id);
+    const notesRef = db.collection(DB_COLLECTION_NOTES).doc(id);
     const noteToUpdate = await notesRef.get();
     if (!noteToUpdate || !noteToUpdate.data) {
       return res.status(404).json({ message: `Note with ID ${id} not found` });

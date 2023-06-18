@@ -1,10 +1,13 @@
 // events.js
+import { Strings } from "./consts";
+
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("./handlers/firebase");
 const secretKey = require("./handlers/jwt_key");
 const openai = require("./handlers/openAiConfig.js");
+const { DB_COLLECTION_EVENTS } = Strings;
 
 router.get("/", (req, res) => {
   const { start, end } = req.query;
@@ -14,7 +17,7 @@ router.get("/", (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const user = decoded.email;
-    const eventsRef = db.collection("events");
+    const eventsRef = db.collection(DB_COLLECTION_EVENTS);
     const eventsGet = await eventsRef.where("user", "==", user).get();
     let filteredEvents = eventsGet.docs.map((doc) => doc.data());
     if (start) {
@@ -52,7 +55,6 @@ function convertStringToTasks(str) {
       }
     }
   }
-  console.log("completion ", tasks);
   return tasks;
 };
 
@@ -71,7 +73,6 @@ async function getTasksBeforeEvent(eventTitle, eventContent) {
     temperature: 0.6,
   });
   const completion = response.data.choices[0].text;
-  console.log("completion ", completion);
   return completion;
   return temp;
 }
@@ -83,7 +84,7 @@ router.put("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
     if (!eventToUpdate || !eventToUpdate.data()) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });
@@ -104,7 +105,7 @@ router.post("/", async (req, res) => {
     }
     const user = decoded.email;
     event.user = user;
-    const eventsRef = db.collection("events");
+    const eventsRef = db.collection(DB_COLLECTION_EVENTS);
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
       event.id = eventsGet.id;
@@ -117,6 +118,7 @@ router.post("/", async (req, res) => {
     res.json(event);
   });
 });
+
 router.put("/addTasks", async (req, res) => {
   console.log("addTasks");
   const { id } = req.query;
@@ -125,7 +127,7 @@ router.put("/addTasks", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
     if (!eventToUpdate || !eventToUpdate.data) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });
@@ -133,8 +135,6 @@ router.put("/addTasks", async (req, res) => {
     const event = eventToUpdate.data();
     const tasks = await getTasksBeforeEvent(event.title, event.content);
     event.tasks = convertStringToTasks(tasks);
-    console.log("here ");
-
     const response = await eventRef.update(event);
     res.json(tasks);
   });
@@ -147,7 +147,7 @@ router.delete("/", (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
     if (!eventToUpdate || !eventToUpdate.data) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });

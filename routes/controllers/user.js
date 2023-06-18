@@ -1,12 +1,14 @@
+import { Strings } from "./consts";
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const db = require("../handlers/firebase");
 const secretKey = require("../handlers/jwt_key");
+const { DB_COLLECTION_USERS } = Strings;
 
 // Login controller
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const usersRef = db.collection("users").doc(email);
+  const usersRef = db.collection(DB_COLLECTION_USERS).doc(email);
   const user_get = await usersRef.get();
   if (user_get && user_get.data() && user_get.data().password === password) {
     const token = jwt.sign({ email }, secretKey);
@@ -20,7 +22,7 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     const { email } = req.query;
     const {name, password } = req.body;
-    const usersRef = db.collection("users").doc(email);
+    const usersRef = db.collection(DB_COLLECTION_USERS).doc(email);
     const user_get = await usersRef.get();
     if (user_get && user_get.data() && user_get.data().name === name) {
       const response = await usersRef.update({password})
@@ -39,7 +41,7 @@ exports.forgotPassword = async (req, res) => {
       if (err) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-    const usersRef = db.collection("users").doc(email);
+    const usersRef = db.collection(DB_COLLECTION_USERS).doc(email);
     const user_get = await usersRef.get();
     if (!user_get || !user_get.data()) {
       return res.status(404).json({ message: `User with email ${email} not found` });
@@ -54,7 +56,7 @@ exports.forgotPassword = async (req, res) => {
 exports.signup = async (req, res) => {
   const { email, password, name, isInCharge, homeAddress = "Not provided", contactNumber = "Not provided" } = req.body;
   const user = { id: uuidv4(), email, password, name, isInCharge, homeAddress, contactNumber };
-  const usersRef = db.collection("users").doc(email);
+  const usersRef = db.collection(DB_COLLECTION_USERS).doc(email);
   let user_get = await usersRef.get();
   if (user_get && user_get.data()) {
     return res.status(403).json({ message: "User Already Exists" });
