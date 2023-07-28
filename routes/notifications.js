@@ -1,5 +1,4 @@
-import { Strings } from "./consts";
-
+const { Strings } = require( "./../consts");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();

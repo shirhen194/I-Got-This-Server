@@ -1,4 +1,5 @@
-import { Strings } from "./consts";
+const { Strings } = require( "./../../consts");
+
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
 const db = require("../handlers/firebase");
