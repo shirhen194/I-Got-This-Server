@@ -3,6 +3,12 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 4005;
 
+// Middleware to log incoming requests
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*')
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -12,6 +18,8 @@ app.use(function (req, res, next) {
   })
 
 app.use(bodyParser.json());
+// app.use(express.static(__dirname));
+
 
 // Import routes
 const userRoutes = require("./routes/user");
@@ -32,5 +40,12 @@ app.use("/api/todos", todoRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+
+
+// Middleware to log outgoing responses
+app.use((req, res, next) => {
+  console.log(`Outgoing response: ${res.statusCode}`);
+  next();
+});
 
 app.listen(port, () => console.log(`Server started on port ${port}`));
