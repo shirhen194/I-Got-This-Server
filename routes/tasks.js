@@ -26,7 +26,7 @@ const upload = multer({ storage: storage });
 router.use(express.json());
 
 function generatePrompt(text) {
-  return ` Extract tasks from the following text and return the tasks as a javascript list:  ${text}`;
+  return ` Extract tasks from the following text and return the tasks as a javascript list: ${text}`;
 }
 
 
@@ -81,9 +81,7 @@ router.post("/extract-task", async (req, res) => {
         max_tokens: 2000,
         temperature: 0.6,
       });
-      console.log("response ", response);
       const completion = response.data.choices[0].text;
-      console.log("completion ", completion);
       res.json(completion);
     } catch (error) {
       console.log(error.message);
@@ -119,5 +117,73 @@ router.post("/speech-to-text", upload.single("audio"), async (req, res) => {
     res.status(500).json({ error: "Error processing audio" });
   }
 });
+
+// Helper function to convert an audio file from URI to ArrayBuffer
+function convertAudioToBuffer(uri) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", uri, true);
+    xhr.responseType = "arraybuffer";
+
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        resolve(xhr.response);
+      } else {
+        reject(new Error("Failed to load audio file"));
+      }
+    };
+
+    xhr.onerror = function () {
+      reject(new Error("Failed to load audio file"));
+    };
+
+    xhr.send();
+  });
+}
+
+// Helper function to encode an ArrayBuffer to MP3
+function encodeToMp3(buffer) {
+  const mp3Encoder = new lamejs.Mp3Encoder(1, 44100, 128);
+  const samples = new Int16Array(buffer);
+  const sampleBlockSize = 1152;
+  const mp3Data = [];
+
+  for (let i = 0; i < samples.length; i += sampleBlockSize) {
+    const left = samples.subarray(i, i + sampleBlockSize);
+    const mp3buf = mp3Encoder.encodeBuffer(left);
+    if (mp3buf.length > 0) {
+      mp3Data.push(mp3buf);
+    }
+  }
+
+  const mp3buf = mp3Encoder.flush();
+  if (mp3buf.length > 0) {
+    mp3Data.push(mp3buf);
+  }
+
+  const mergedMp3Data = new Uint8Array(
+    mp3Data.reduce((acc, chunk) => acc.concat(chunk), [])
+  );
+  return mergedMp3Data.buffer;
+}
+
+// Convert audio file from URI to MP3
+function convertToMp3(uri) {
+  convertAudioToBuffer(uri)
+    .then((audioBuffer) => {
+      const mp3Buffer = encodeToMp3(audioBuffer);
+      const mp3Blob = new Blob([mp3Buffer], { type: "audio/mp3" });
+
+      // Use the mp3Blob as needed (e.g., download it or send it to the server)
+      // For example, to download the converted file:
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(mp3Blob);
+      downloadLink.download = "converted.mp3";
+      downloadLink.click();
+    })
+    .catch((error) => {
+      console.error("Failed to convert audio to MP3:", error);
+    });
+}
 
 module.exports = router;

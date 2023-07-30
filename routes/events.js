@@ -1,10 +1,12 @@
 // events.js
+const { Strings } = require( "./../consts");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("./handlers/firebase");
 const secretKey = require("./handlers/jwt_key");
 const openai = require("./handlers/openAiConfig.js");
+const { DB_COLLECTION_EVENTS } = Strings;
 
 router.get("/", (req, res) => {
   const { start, end } = req.query;
@@ -14,7 +16,7 @@ router.get("/", (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const user = decoded.email;
-    const eventsRef = db.collection("events");
+    const eventsRef = db.collection(DB_COLLECTION_EVENTS);
     const eventsGet = await eventsRef.where("user", "==", user).get();
     let filteredEvents = eventsGet.docs.map((doc) => doc.data());
     if (start) {
@@ -30,12 +32,6 @@ router.get("/", (req, res) => {
     res.json({ events: filteredEvents });
   });
 });
-
-// function convertToList(text) {
-//   // Split the text into separate lines
-//   const list = text.split("\n");
-//   return list;
-// }
 
 function convertStringToTasks(str) {
   const lines = str.split('\n'); // Split the string by newline characters
@@ -58,7 +54,6 @@ function convertStringToTasks(str) {
       }
     }
   }
-  console.log("completion ", tasks);
   return tasks;
 };
 
@@ -70,20 +65,14 @@ function generatePromptTasksBeforeEvent(eventTitle, eventContent) {
 }
 
 async function getTasksBeforeEvent(eventTitle, eventContent) {
-  // const response = await openai.createCompletion({
-  //   model: "text-davinci-003",
-  //   prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
-  //   max_tokens: 2000,
-  //   temperature: 0.6,
-  // });
-  // const completion = response.data.choices[0].text;
-  // console.log("completion ", completion);
-  // return completion;
-  const temp = `
-  1. Set an alarm for the time you need to leave for the event.
-  2. Pack a bag with items you may need for the event, such as a water bottle, snacks, a notebook, and a pen.
-  3. Prepare your outfit for the event, including shoes and accessories.
-  4. Check the address and directions to the event location.`;
+  const response = await openai.createCompletion({
+    model: "text-davinci-003",
+    prompt: generatePromptTasksBeforeEvent(eventTitle, eventContent),
+    max_tokens: 2000,
+    temperature: 0.6,
+  });
+  const completion = response.data.choices[0].text;
+  return completion;
   return temp;
 }
 
@@ -94,29 +83,28 @@ router.put("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
-    console.log("eventRef ", eventRef);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
-    console.log("eventToUpdate ", eventToUpdate);
-    if (!eventToUpdate || !eventToUpdate.data) {
+    if (!eventToUpdate || !eventToUpdate.data()) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });
     }
     const response = await eventRef.update(req.body);
-    console.log("response ", response);
-    res.json(response);
+    const event_updated = {...eventToUpdate.data(), ...req.body}
+    res.json({...eventToUpdate.data(), ...req.body});
   });
 });
 
 router.post("/", async (req, res) => {
   const event = req.body;
   const token = req.header("Authorization");
+
   jwt.verify(token, secretKey, async (err, decoded) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     const user = decoded.email;
     event.user = user;
-    const eventsRef = db.collection("events");
+    const eventsRef = db.collection(DB_COLLECTION_EVENTS);
     const eventsGet = await eventsRef.add(event);
     if (eventsGet && eventsGet.id) {
       event.id = eventsGet.id;
@@ -129,6 +117,7 @@ router.post("/", async (req, res) => {
     res.json(event);
   });
 });
+
 router.put("/addTasks", async (req, res) => {
   console.log("addTasks");
   const { id } = req.query;
@@ -137,7 +126,7 @@ router.put("/addTasks", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
     if (!eventToUpdate || !eventToUpdate.data) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });
@@ -145,8 +134,6 @@ router.put("/addTasks", async (req, res) => {
     const event = eventToUpdate.data();
     const tasks = await getTasksBeforeEvent(event.title, event.content);
     event.tasks = convertStringToTasks(tasks);
-    console.log("here ");
-
     const response = await eventRef.update(event);
     res.json(tasks);
   });
@@ -159,7 +146,7 @@ router.delete("/", (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const eventRef = db.collection("events").doc(id);
+    const eventRef = db.collection(DB_COLLECTION_EVENTS).doc(id);
     const eventToUpdate = await eventRef.get();
     if (!eventToUpdate || !eventToUpdate.data) {
       return res.status(404).json({ message: `Event with ID ${id} not found` });

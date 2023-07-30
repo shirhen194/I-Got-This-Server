@@ -1,9 +1,10 @@
-// todos.js
+const { Strings } = require( "./../consts");
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const router = express.Router();
 const db = require("./handlers/firebase");
 const secretKey = require("./handlers/jwt_key");
+const { DB_COLLECTION_TODOS } = Strings;
 
 
 router.get("/", async (req, res) => {
@@ -12,7 +13,7 @@ router.get("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const todoRef = db.collection("todo");
+    const todoRef = db.collection(DB_COLLECTION_TODOS);
     const user = decoded.email;
     let todosGet = await todoRef.where("user", "==", user).get();
     todos = todosGet.docs.map((doc) => doc.data());
@@ -29,7 +30,7 @@ router.post("/", async (req, res) => {
     const todo = req.body;
     const user = decoded.email;
     todo.user = user;
-    const todosRef = db.collection("todo");
+    const todosRef = db.collection(DB_COLLECTION_TODOS);
     const todosGet = await todosRef.add(todo);
     if (todosGet && todosGet.id) {
       todo.id = todosGet.id;
@@ -50,13 +51,13 @@ router.put("/", async (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const todosRef = db.collection("todo").doc(id);
+    const todosRef = db.collection(DB_COLLECTION_TODOS).doc(id);
     const todoToUpdate = await todosRef.get();
     if (!todoToUpdate || !todoToUpdate.data) {
       return res.status(404).json({ message: `Todo with ID ${id} not found` });
     }
     const response = await todosRef.update(req.body);
-    res.json(response.data());
+    res.json({...todoToUpdate.data(), ...req.body});
   });
 });
 
@@ -67,7 +68,7 @@ router.delete("/", (req, res) => {
     if (err) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    const todosRef = db.collection("todo").doc(id);
+    const todosRef = db.collection(DB_COLLECTION_TODOS).doc(id);
     const todoToUpdate = await todosRef.get();
     if (!todoToUpdate || !todoToUpdate.data) {
       return res.status(404).json({ message: `Todo with ID ${id} not found` });
